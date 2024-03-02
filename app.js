@@ -21,11 +21,21 @@ const initializeDbAndServer = async () => {
 };
 initializeDbAndServer();
 
+const convertDbobjectIntoResponseObject = (dbObject) => {
+  return {
+    playerId: dbObject.player_id,
+    playerName: dbObject.player_name,
+    jerseyNumber: dbObject.jersey_number,
+    role: dbObject.role,
+  };
+};
 //API to get a list of players in the team
 app.get("/players/", async (request, response) => {
   const allPlayersQuery = `SELECT * FROM cricket_team;`;
   const result = await db.all(allPlayersQuery);
-  response.send(result);
+  response.send(
+    result.map((eachplayer) => convertDbobjectIntoResponseObject(eachplayer))
+  );
 });
 
 //API to add a new player
@@ -33,9 +43,8 @@ app.post("/players/", async (request, response) => {
   const playersDetails = request.body;
   const { player_name, jerseyNumber, role } = playersDetails;
   const addPlayerQuery = `INSERT INTO cricket_team(player_name,jersey_number,role)
-    VALUES ("${player_name}",${jerseyNumber},"${role}");`;
+    VALUES ('${player_name}',${jerseyNumber},'${role}');`;
   const result = await db.run(addPlayerQuery);
-  const playerId = result.lastID;
   response.send("Player Added to Team");
 });
 
@@ -46,7 +55,7 @@ app.get("/players/:playerId/", async (request, response) => {
     FROM cricket_team 
     WHERE player_id=${playerId};`;
   const player = await db.get(playerDetailsQuery);
-  response.send(player);
+  response.send(convertDbobjectIntoResponseObject(player));
 });
 
 //API TO UPDATE DETAILS OF PLAYER BASED ON PLAYER ID
